@@ -22,12 +22,14 @@ class StoreApplicationRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
+
         return [
-            'company'      => 'required|string|max:255',
-            'role'         => 'required|string|max:255',
+            'company'      => $isUpdate ? 'sometimes|string|max:255'   : 'required|string|max:255',
+            'role'         => $isUpdate ? 'sometimes|string|max:255'   : 'required|string|max:255',
             'job_url'      => 'nullable|url|max:500',
-            'status'       => 'required|in:wishlist,applied,phone_screen,interview,offer,rejected',
-            'priority'     => 'required|in:high,medium,low',
+            'status'       => 'sometimes|in:wishlist,applied,phone_screen,interview,offer,rejected',
+            'priority'     => 'sometimes|in:high,medium,low',
             'applied_date' => 'nullable|date',
             'deadline'     => 'nullable|date',
             'salary_min'   => 'nullable|numeric|min:0',

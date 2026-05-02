@@ -13,7 +13,7 @@ class ApplicationController extends Controller
     {
         $query = $request->user()
             ->applications()
-            ->with(['contacts', 'interviewRounds']);
+            ->withCount('interviewRounds');
 
         if ($request->filled('search')) {
             $search = $request->search;
