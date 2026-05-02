@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Application extends Model
 {
     protected $fillable = [
-        'user_id', 'company', 'role', 'job_url', 'status',
-        'priority', 'applied_date', 'deadline',
+        'user_id', 'company', 'role', 'job_url',
+        'location', 'work_type', 'employment_type',
+        'status', 'priority', 'applied_date', 'deadline',
         'salary_min', 'salary_max', 'salary_currency', 'notes',
     ];
 

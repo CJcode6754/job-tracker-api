@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\GeminiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AiController extends Controller
 {
@@ -146,35 +147,47 @@ PROMPT;
             'job_description' => 'required|string|max:5000',
         ]);
 
-        $jd = $request->job_description;
+        $jd = mb_substr($request->job_description, 0, 2000);
 
         $prompt = <<<PROMPT
-Extract structured information from this job description.
-Return ONLY a valid JSON object with no explanation, no markdown, no code fences.
+Extract key info from this job description. Be concise.
 
 Job Description:
 {$jd}
 
-Return this exact JSON structure:
+Return this JSON (no extra text, no markdown, no code fences):
 {
-  "role_title": "extracted job title",
-  "seniority": "junior | mid | senior | lead | staff | not specified",
-  "employment_type": "full-time | part-time | contract | freelance | not specified",
-  "remote_policy": "remote | hybrid | on-site | not specified",
-  "tech_stack": ["list", "of", "technologies"],
-  "key_requirements": ["top 3-4 must-have requirements"],
-  "salary_range": "extracted range or null",
-  "company_size_hint": "startup | mid-size | enterprise | not mentioned",
-  "estimated_priority": "high | medium | low",
-  "priority_reason": "one sentence explaining why"
+  "role_title": "job title",
+  "company": "company name or null",
+  "location": "location or null",
+  "seniority": "junior|mid|senior|lead|not specified",
+  "employment_type": "full-time|part-time|contract|freelance|not specified",
+  "remote_policy": "remote|hybrid|on-site|not specified",
+  "tech_stack": ["max 5 main technologies"],
+  "key_requirements": ["top 3 must-haves"],
+  "salary_range": "range or null",
+  "company_size_hint": "startup|mid-size|enterprise|not mentioned",
+  "estimated_priority": "high|medium|low",
+  "priority_reason": "one short sentence"
 }
 PROMPT;
 
-        $raw  = $this->gemini->generate($prompt);
-        $json = preg_replace('/```json|```/', '', $raw);
+        $raw  = $this->gemini->generateJson($prompt);
+        Log::info('Gemini raw response', ['raw' => $raw]);
+
+        // Extract JSON — handle markdown fences and any surrounding text
+        if (preg_match('/```(?:json)?\s*(\{.*\})\s*```/s', $raw, $matches)) {
+            $json = $matches[1];
+        } elseif (preg_match('/(\{.*\})/s', $raw, $matches)) {
+            $json = $matches[1];
+        } else {
+            $json = $raw;
+        }
+
         $tags = json_decode(trim($json), true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('AI tag parse failed', ['raw' => $raw]);
             return response()->json(['error' => 'Could not parse AI response. Try again.'], 422);
         }
 

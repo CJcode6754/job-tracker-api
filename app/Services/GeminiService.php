@@ -76,4 +76,33 @@ class GeminiService
     {
         return $this->chat('', [], $prompt);
     }
+
+    public function generateJson(string $prompt): string
+    {
+        $response = Http::withQueryParameters(['key' => $this->apiKey])
+            ->timeout(30)
+            ->post("{$this->apiUrl}/{$this->model}:generateContent", [
+                'contents' => [
+                    ['role' => 'user', 'parts' => [['text' => $prompt]]],
+                ],
+                'generationConfig' => [
+                    'temperature'     => 0.1,
+                    'maxOutputTokens' => 1024,
+                    'thinkingConfig'  => ['thinkingBudget' => 0],
+                ],
+            ]);
+
+        if ($response->failed()) {
+            Log::error('Gemini API error', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            throw new \Exception('AI service unavailable. Please try again.');
+        }
+
+        $data = $response->json();
+
+        return $data['candidates'][0]['content']['parts'][0]['text']
+            ?? 'Sorry, I could not generate a response.';
+    }
 }
