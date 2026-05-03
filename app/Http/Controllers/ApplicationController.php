@@ -78,7 +78,11 @@ class ApplicationController extends Controller
     {
         $application = $this->findByHash($hash);
         $this->authorize('update', $application);
-        $application->update($request->validated());
+        $data = $request->validated();
+        if (isset($data['status']) && $data['status'] === 'archived' && !$application->archived_at) {
+            $data['archived_at'] = now();
+        }
+        $application->update($data);
         return response()->json($application->fresh(['contacts', 'interviewRounds']));
     }
 
