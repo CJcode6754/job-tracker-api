@@ -5,6 +5,9 @@ COPY . .
 RUN dos2unix /var/www/html/scripts/00-laravel-deploy.sh && \
     chmod +x /var/www/html/scripts/00-laravel-deploy.sh
 
+# Install PHP extensions
+RUN apk add --no-cache php83-bcmath php83-gmp
+
 # Image config
 ENV SKIP_COMPOSER 1
 ENV WEBROOT /var/www/html/public
