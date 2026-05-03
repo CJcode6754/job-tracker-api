@@ -2,6 +2,8 @@ FROM richarvey/nginx-php-fpm:3.1.6
 
 COPY . .
 
+RUN dos2unix /var/www/html/scripts/00-laravel-deploy.sh
+
 # Image config
 ENV SKIP_COMPOSER 1
 ENV WEBROOT /var/www/html/public
