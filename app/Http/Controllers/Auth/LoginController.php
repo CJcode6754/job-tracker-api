@@ -45,7 +45,7 @@ class LoginController extends Controller
         $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
         return response()
-            ->json(['user' => $user])
+            ->json(['user' => $user, 'plainTextToken' => $token])
             ->withCookie($this->tokenCookie($token));
     }
 
@@ -59,7 +59,7 @@ class LoginController extends Controller
         $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
         return response()
-            ->json(['message' => 'Token refreshed'])
+            ->json(['message' => 'Token refreshed', 'plainTextToken' => $token])
             ->withCookie($this->tokenCookie($token));
     }
 

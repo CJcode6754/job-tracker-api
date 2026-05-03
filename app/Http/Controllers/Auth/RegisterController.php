@@ -35,6 +35,7 @@ class RegisterController extends Controller
         return response()
             ->json([
                 'user'    => $user,
+                'plainTextToken' => $token,
                 'message' => 'Registered successfully',
             ], 201)
             ->cookie(
