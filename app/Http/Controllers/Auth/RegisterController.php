@@ -21,7 +21,7 @@ class RegisterController extends Controller
         $token = $user->createToken('auth_token', ['*'], now()->addMinutes(config('sanctum.expiration')))->plainTextToken;
 
         return response()
-            ->json(['user' => $user, 'message' => 'Registered successfully'], 201)
+            ->json(['user' => $user, 'plainTextToken' => $token, 'message' => 'Registered successfully'], 201)
             ->cookie(
                 'auth_token',
                 $token,

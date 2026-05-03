@@ -21,12 +21,15 @@ class DashboardController extends Controller
             'total'     => $applications->count(),
             'active'    => $applications->whereNotIn('status', ['rejected'])->count(),
             'offers'    => $applications->where('status', 'offer')->count(),
-            'by_status' => $applications->groupBy('status')->map->count(),
+            'by_status' => $applications->groupBy('status')->map->count()
+                ->map(fn($count, $status) => ['status' => $status, 'count' => $count])
+                ->values(),
             'by_week'   => $applications
                 ->whereNotNull('applied_date')
                 ->groupBy(fn($a) => \Carbon\Carbon::parse($a->applied_date)->format('Y-W'))
-                ->map->count()
-                ->sortKeys(),
+                ->map(fn($group, $week) => ['week' => $week, 'count' => $group->count()])
+                ->sortBy('week')
+                ->values(),
             'interviews' => [
                 'total_rounds'  => $allRounds->count(),
                 'avg_rating'    => ($avg = $allRounds->whereNotNull('self_rating')->avg('self_rating')) ? round($avg, 1) : null,
