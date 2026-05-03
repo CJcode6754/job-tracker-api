@@ -6,7 +6,8 @@ RUN dos2unix /var/www/html/scripts/00-laravel-deploy.sh && \
     chmod +x /var/www/html/scripts/00-laravel-deploy.sh
 
 # Install PHP extensions
-RUN apk add --no-cache php83-bcmath php83-gmp
+RUN apk add --no-cache gmp-dev && \
+    docker-php-ext-install bcmath gmp
 
 # Image config
 ENV SKIP_COMPOSER 1
