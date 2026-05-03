@@ -72,26 +72,26 @@ class AiController extends Controller
         $background = $request->input('user_background', 'Not provided');
 
         $prompt = <<<PROMPT
-Write a professional, compelling cover letter for the following job application.
+        Write a professional, compelling cover letter for the following job application.
 
-Company: {$company}
-Role: {$role}
-Job Description: {$jd}
-My Notes about this role: {$notes}
-My Background: {$background}
+        Company: {$company}
+        Role: {$role}
+        Job Description: {$jd}
+        My Notes about this role: {$notes}
+        My Background: {$background}
 
-Guidelines:
-- Write 4 full paragraphs — do not cut short
-- Opening: Express genuine enthusiasm for the specific role and company, mention something specific about the company
-- Second paragraph: Highlight 2-3 concrete achievements or experiences directly relevant to the role
-- Third paragraph: Connect your skills to the job requirements, show you understand what they need
-- Closing: Strong call to action, express eagerness for an interview, professional sign-off
-- Tone: Confident, professional but personable — not robotic or generic
-- Be specific — use numbers, results, and real examples where possible
-- Do NOT use placeholder text like [Your Name] or [Date] — write it as a complete ready-to-send draft
-- Do NOT include date or address headers — just the body paragraphs
-- Aim for 300-400 words
-PROMPT;
+        Guidelines:
+        - Write 4 full paragraphs — do not cut short
+        - Opening: Express genuine enthusiasm for the specific role and company, mention something specific about the company
+        - Second paragraph: Highlight 2-3 concrete achievements or experiences directly relevant to the role
+        - Third paragraph: Connect your skills to the job requirements, show you understand what they need
+        - Closing: Strong call to action, express eagerness for an interview, professional sign-off
+        - Tone: Confident, professional but personable — not robotic or generic
+        - Be specific — use numbers, results, and real examples where possible
+        - Do NOT use placeholder text like [Your Name] or [Date] — write it as a complete ready-to-send draft
+        - Do NOT include date or address headers — just the body paragraphs
+        - Aim for 300-400 words
+        PROMPT;
 
         $letter = $this->gemini->generate($prompt);
 
@@ -113,25 +113,26 @@ PROMPT;
         $appContext = $this->buildApplicationContext($applications);
 
         $prompt = <<<PROMPT
-Analyze this job seeker's application pipeline and provide detailed, actionable insights.
+        Analyze this job seeker's application pipeline and provide detailed, actionable insights.
 
-{$appContext}
+        {$appContext}
 
-Today's date: {$this->todayDate()}
+        Today's date: {$this->todayDate()}
 
-Provide 5 detailed insights covering:
-1. 📊 Pipeline health — response rate, conversion between stages, how active the search is
-2. 🔔 Follow-up needed — applications with no update after 7+ days, specific companies to follow up with
-3. ⏰ Upcoming deadlines — any deadlines in the next 7 days, urgency level
-4. ⭐ Wins & encouragement — highlight positive progress, interviews, offers
-5. 💡 Specific recommendation — one concrete action to improve their job search this week
+        Provide 5 detailed insights covering:
+        1. 📊 Pipeline health — response rate, conversion between stages, how active the search is
+        2. 🔔 Follow-up needed — applications with no update after 7+ days, specific companies to follow up with
+        3. ⏰ Upcoming deadlines — any deadlines in the next 7 days, urgency level
+        4. ⭐ Wins & encouragement — highlight positive progress, interviews, offers
+        5. 💡 Specific recommendation — one concrete action to improve their job search this week
 
-For each insight:
-- Write 2-4 sentences minimum
-- Reference specific company names and numbers from the data
-- Be direct and actionable, not vague
-- If data is missing for a section, provide general advice based on what you can see
-PROMPT;
+        For each insight:
+        - Write 2-4 sentences minimum
+        - Reference specific company names and numbers from the data
+        - Be direct and actionable, not vague
+        - If data is missing for a section, provide general advice based on what you can see
+        - Do NOT use markdown formatting, headings, or bold text — plain text only
+        PROMPT;
 
         $insights = $this->gemini->generate($prompt);
 
