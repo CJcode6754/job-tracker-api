@@ -19,33 +19,29 @@ class LoginController extends Controller
             $token,
             config('sanctum.expiration'),
             '/',
-            env('SESSION_DOMAIN', null),
-            env('SESSION_SECURE_COOKIE', false),
+            config('session.domain'),
+            config('session.secure'),
             true,   // httpOnly
             false,  // raw
-            'Lax'   // sameSite — Strict blocks Vite proxy requests
+            'Lax'   // sameSite
         );
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        \Illuminate\Support\Facades\Log::info('Login attempt for: ' . $request->email);
-
         if (!Auth::attempt($request->only('email', 'password'), false)) {
-            \Illuminate\Support\Facades\Log::warning('Login failed for: ' . $request->email);
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        \Illuminate\Support\Facades\Log::info('Login successful for: ' . $request->email);
         $user = Auth::user();
         $user->tokens()->delete();
 
         $expiration = config('sanctum.expiration');
-        $expiresAt = $expiration ? now()->addMinutes($expiration) : null;
-        $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
+        $expiresAt  = $expiration ? now()->addMinutes($expiration) : null;
+        $token      = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
         return response()
-            ->json(['user' => $user, 'plainTextToken' => $token])
+            ->json(['user' => $user])
             ->withCookie($this->tokenCookie($token));
     }
 
@@ -55,11 +51,11 @@ class LoginController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         $expiration = config('sanctum.expiration');
-        $expiresAt = $expiration ? now()->addMinutes($expiration) : null;
-        $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
+        $expiresAt  = $expiration ? now()->addMinutes($expiration) : null;
+        $token      = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
         return response()
-            ->json(['message' => 'Token refreshed', 'plainTextToken' => $token])
+            ->json(['message' => 'Token refreshed'])
             ->withCookie($this->tokenCookie($token));
     }
 

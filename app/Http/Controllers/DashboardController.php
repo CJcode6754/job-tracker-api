@@ -10,42 +10,28 @@ class DashboardController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->user();
-        $base = $user->applications();
-
-        $interviewApps = $base->clone()
-            ->where('status', 'interview')
+        $applications = $user->applications()
             ->with('interviewRounds')
             ->get();
 
-        $totalRounds    = $interviewApps->sum(fn($a) => $a->interviewRounds->count());
-        $avgRating      = $interviewApps
-            ->flatMap(fn($a) => $a->interviewRounds)
-            ->whereNotNull('self_rating')
-            ->avg('self_rating');
-        $roundsByType   = $interviewApps
-            ->flatMap(fn($a) => $a->interviewRounds)
-            ->groupBy('type')
-            ->map->count();
+        $interviewApps  = $applications->where('status', 'interview');
+        $allRounds      = $interviewApps->flatMap(fn($a) => $a->interviewRounds);
 
         return response()->json([
-            'total'     => $base->clone()->count(),
-            'active'    => $base->clone()->whereNotIn('status', ['rejected'])->count(),
-            'offers'    => $base->clone()->where('status', 'offer')->count(),
-            'by_status' => $base->clone()
-                ->selectRaw('status, count(*) as count')
-                ->groupBy('status')
-                ->get(),
-            'by_week'   => $base->clone()
-                ->selectRaw('DATE_FORMAT(applied_date, "%Y-%u") as week, count(*) as count')
+            'total'     => $applications->count(),
+            'active'    => $applications->whereNotIn('status', ['rejected'])->count(),
+            'offers'    => $applications->where('status', 'offer')->count(),
+            'by_status' => $applications->groupBy('status')->map->count(),
+            'by_week'   => $applications
                 ->whereNotNull('applied_date')
-                ->groupBy('week')
-                ->orderBy('week')
-                ->get(),
+                ->groupBy(fn($a) => \Carbon\Carbon::parse($a->applied_date)->format('Y-W'))
+                ->map->count()
+                ->sortKeys(),
             'interviews' => [
-                'total_rounds'   => $totalRounds,
-                'avg_rating'     => $avgRating ? round($avgRating, 1) : null,
-                'by_type'        => $roundsByType,
-                'active_count'   => $interviewApps->count(),
+                'total_rounds'  => $allRounds->count(),
+                'avg_rating'    => ($avg = $allRounds->whereNotNull('self_rating')->avg('self_rating')) ? round($avg, 1) : null,
+                'by_type'       => $allRounds->groupBy('type')->map->count(),
+                'active_count'  => $interviewApps->count(),
             ],
         ]);
     }

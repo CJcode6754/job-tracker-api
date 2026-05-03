@@ -25,7 +25,7 @@ class ApplicationSeeder extends Seeder
         // Add 1-4 interview rounds to applications with 'interview' status
         $interviewApps = $applications->where('status', 'interview');
         foreach ($interviewApps as $app) {
-            InterviewRound::factory(rand(1, 4))->create([
+            InterviewRound::factory(random_int(1, 4))->create([
                 'application_id' => $app->id,
             ]);
         }

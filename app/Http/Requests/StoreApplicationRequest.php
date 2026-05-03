@@ -37,7 +37,7 @@ class StoreApplicationRequest extends FormRequest
             'deadline'          => 'nullable|date',
             'salary_min'        => 'nullable|numeric|min:0',
             'salary_max'        => 'nullable|numeric|min:0|gte:salary_min',
-            'notes'             => 'nullable|string',
+            'notes'             => 'nullable|string|max:5000',
         ];
     }
 }

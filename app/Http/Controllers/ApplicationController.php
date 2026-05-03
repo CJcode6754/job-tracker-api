@@ -42,10 +42,12 @@ class ApplicationController extends Controller
             );
         }
 
-        if ($request->filled('status') && $request->status !== 'all') {
+        $validStatuses  = ['wishlist', 'applied', 'phone_screen', 'interview', 'offer', 'rejected', 'archived'];
+        $validPriorities = ['low', 'medium', 'high'];
+
+        if ($request->filled('status') && in_array($request->status, $validStatuses)) {
             $query->where('status', $request->status);
         } else {
-            // Default filters if no specific status is requested
             if (!$request->boolean('show_rejected', false)) {
                 $query->where('status', '!=', 'rejected');
             }
@@ -54,7 +56,7 @@ class ApplicationController extends Controller
             }
         }
 
-        if ($request->filled('priority') && $request->priority !== 'all') {
+        if ($request->filled('priority') && in_array($request->priority, $validPriorities)) {
             $query->where('priority', $request->priority);
         }
 

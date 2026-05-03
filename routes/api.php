@@ -15,6 +15,9 @@ Route::middleware('throttle:auth')->group(function () {
     Route::post('/login', [LoginController::class, 'login']);
 });
 
+// Health check for uptime monitoring
+Route::get('/health', fn() => response()->json(['status' => 'ok']));
+
 // Public / Semi-public routes
 Route::get('/me', [LoginController::class, 'me']);
 

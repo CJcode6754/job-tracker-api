@@ -42,7 +42,7 @@ class GeminiService
             'parts' => [['text' => $userMessage]],
         ];
 
-        $response = Http::withQueryParameters(['key' => $this->apiKey])
+        $response = Http::withHeaders(['x-goog-api-key' => $this->apiKey])
             ->timeout(60)
             ->post("{$this->apiUrl}/{$this->model}:generateContent", [
                 'system_instruction' => [
@@ -80,7 +80,7 @@ class GeminiService
 
     public function generateJson(string $prompt): string
     {
-        $response = Http::withQueryParameters(['key' => $this->apiKey])
+        $response = Http::withHeaders(['x-goog-api-key' => $this->apiKey])
             ->timeout(30)
             ->post("{$this->apiUrl}/{$this->model}:generateContent", [
                 'contents' => [
