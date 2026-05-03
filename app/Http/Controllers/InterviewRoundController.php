@@ -6,47 +6,52 @@ use App\Http\Requests\StoreInterviewRoundRequest;
 use App\Models\Application;
 use App\Models\InterviewRound;
 use Illuminate\Http\JsonResponse;
+use Vinkla\Hashids\Facades\Hashids;
 
 class InterviewRoundController extends Controller
 {
-    public function index(Application $application): JsonResponse
+    private function findApp(string $hash): Application
     {
-        $this->authorize('view', $application);
+        $decoded = Hashids::decode($hash);
+        abort_if(empty($decoded), 404);
+        return Application::findOrFail($decoded[0]);
+    }
 
+    public function index(string $hash): JsonResponse
+    {
+        $application = $this->findApp($hash);
+        $this->authorize('view', $application);
         return response()->json($application->interviewRounds);
     }
 
-    public function store(StoreInterviewRoundRequest $request, Application $application): JsonResponse
+    public function store(StoreInterviewRoundRequest $request, string $hash): JsonResponse
     {
+        $application = $this->findApp($hash);
         $this->authorize('view', $application);
-
         $round = $application->interviewRounds()->create($request->validated());
-
         return response()->json($round, 201);
     }
 
-    public function show(Application $application, InterviewRound $interviewRound): JsonResponse
+    public function show(string $hash, InterviewRound $interviewRound): JsonResponse
     {
+        $application = $this->findApp($hash);
         $this->authorize('view', $application);
-
         return response()->json($interviewRound);
     }
 
-    public function update(StoreInterviewRoundRequest $request, Application $application, InterviewRound $interviewRound): JsonResponse
+    public function update(StoreInterviewRoundRequest $request, string $hash, InterviewRound $interviewRound): JsonResponse
     {
+        $application = $this->findApp($hash);
         $this->authorize('update', $application);
-
         $interviewRound->update($request->validated());
-
         return response()->json($interviewRound->fresh());
     }
 
-    public function destroy(Application $application, InterviewRound $interviewRound): JsonResponse
+    public function destroy(string $hash, InterviewRound $interviewRound): JsonResponse
     {
+        $application = $this->findApp($hash);
         $this->authorize('delete', $application);
-
         $interviewRound->delete();
-
         return response()->json(null, 204);
     }
 }

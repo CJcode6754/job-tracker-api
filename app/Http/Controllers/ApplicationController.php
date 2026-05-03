@@ -6,9 +6,16 @@ use App\Http\Requests\StoreApplicationRequest;
 use App\Models\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Vinkla\Hashids\Facades\Hashids;
 
 class ApplicationController extends Controller
 {
+    private function findByHash(string $hash): Application
+    {
+        $decoded = Hashids::decode($hash);
+        abort_if(empty($decoded), 404);
+        return Application::findOrFail($decoded[0]);
+    }
     public function index(Request $request): JsonResponse
     {
         $query = $request->user()
@@ -40,21 +47,24 @@ class ApplicationController extends Controller
         return response()->json($app->load(['contacts', 'interviewRounds']), 201);
     }
 
-    public function show(Application $application): JsonResponse
+    public function show(string $hash): JsonResponse
     {
+        $application = $this->findByHash($hash);
         $this->authorize('view', $application);
         return response()->json($application->load(['contacts', 'interviewRounds']));
     }
 
-    public function update(StoreApplicationRequest $request, Application $application): JsonResponse
+    public function update(StoreApplicationRequest $request, string $hash): JsonResponse
     {
+        $application = $this->findByHash($hash);
         $this->authorize('update', $application);
         $application->update($request->validated());
         return response()->json($application->fresh(['contacts', 'interviewRounds']));
     }
 
-    public function destroy(Application $application): JsonResponse
+    public function destroy(string $hash): JsonResponse
     {
+        $application = $this->findByHash($hash);
         $this->authorize('delete', $application);
         $application->delete();
         return response()->json(null, 204);
