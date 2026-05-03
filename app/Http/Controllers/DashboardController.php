@@ -9,7 +9,23 @@ class DashboardController extends Controller
 {
     public function stats(Request $request): JsonResponse
     {
-        $base = $request->user()->applications();
+        $user = $request->user();
+        $base = $user->applications();
+
+        $interviewApps = $base->clone()
+            ->where('status', 'interview')
+            ->with('interviewRounds')
+            ->get();
+
+        $totalRounds    = $interviewApps->sum(fn($a) => $a->interviewRounds->count());
+        $avgRating      = $interviewApps
+            ->flatMap(fn($a) => $a->interviewRounds)
+            ->whereNotNull('self_rating')
+            ->avg('self_rating');
+        $roundsByType   = $interviewApps
+            ->flatMap(fn($a) => $a->interviewRounds)
+            ->groupBy('type')
+            ->map->count();
 
         return response()->json([
             'total'     => $base->clone()->count(),
@@ -25,6 +41,12 @@ class DashboardController extends Controller
                 ->groupBy('week')
                 ->orderBy('week')
                 ->get(),
+            'interviews' => [
+                'total_rounds'   => $totalRounds,
+                'avg_rating'     => $avgRating ? round($avgRating, 1) : null,
+                'by_type'        => $roundsByType,
+                'active_count'   => $interviewApps->count(),
+            ],
         ]);
     }
 }

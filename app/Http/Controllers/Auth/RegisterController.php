@@ -19,7 +19,7 @@ class RegisterController extends Controller
         ]);
 
         // Log them in immediately after registration
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token', ['*'], now()->addMinutes(config('sanctum.expiration')))->plainTextToken;
         
         return response()->json([
             'user'    => $user,

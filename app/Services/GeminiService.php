@@ -43,7 +43,7 @@ class GeminiService
         ];
 
         $response = Http::withQueryParameters(['key' => $this->apiKey])
-            ->timeout(30)
+            ->timeout(60)
             ->post("{$this->apiUrl}/{$this->model}:generateContent", [
                 'system_instruction' => [
                     'parts' => [['text' => $systemPrompt]],
@@ -51,7 +51,8 @@ class GeminiService
                 'contents'         => $contents,
                 'generationConfig' => [
                     'temperature'     => 0.7,
-                    'maxOutputTokens' => 1024,
+                    'maxOutputTokens' => 4096,
+                    'thinkingConfig'  => ['thinkingBudget' => 0],
                 ],
             ]);
 

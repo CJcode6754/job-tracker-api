@@ -11,9 +11,7 @@ class AiController extends Controller
 {
     public function __construct(private GeminiService $gemini) {}
 
-    // -------------------------------------------------------
-    // 💬 CHATBOT
-    // -------------------------------------------------------
+    // CHATBOT
     public function chat(Request $request): JsonResponse
     {
         $request->validate([
@@ -32,20 +30,20 @@ class AiController extends Controller
         $appContext = $this->buildApplicationContext($applications);
 
         $systemPrompt = <<<PROMPT
-You are a helpful job search assistant. The user is tracking their job applications.
-Here is their current application data:
+        You are a helpful job search assistant. The user is tracking their job applications.
+        Here is their current application data:
 
-{$appContext}
+        {$appContext}
 
-Today's date is: {$this->todayDate()}.
+        Today's date is: {$this->todayDate()}.
 
-Answer questions about their applications clearly and concisely.
-When listing applications, use bullet points.
-If asked about deadlines or dates, calculate how many days remain from today.
-If asked for advice, be encouraging but realistic.
-Do not make up any application data — only use what is provided above.
-If there are no applications, tell the user to start adding some.
-PROMPT;
+        Answer questions about their applications clearly and concisely.
+        When listing applications, use bullet points.
+        If asked about deadlines or dates, calculate how many days remain from today.
+        If asked for advice, be encouraging but realistic.
+        Do not make up any application data — only use what is provided above.
+        If there are no applications, tell the user to start adding some.
+        PROMPT;
 
         $reply = $this->gemini->chat(
             $systemPrompt,
@@ -56,9 +54,7 @@ PROMPT;
         return response()->json(['reply' => $reply]);
     }
 
-    // -------------------------------------------------------
-    // ✍️ COVER LETTER GENERATOR
-    // -------------------------------------------------------
+    // COVER LETTER GENERATOR
     public function coverLetter(Request $request): JsonResponse
     {
         $request->validate([
@@ -76,7 +72,7 @@ PROMPT;
         $background = $request->input('user_background', 'Not provided');
 
         $prompt = <<<PROMPT
-Write a professional, concise cover letter for the following job application.
+Write a professional, compelling cover letter for the following job application.
 
 Company: {$company}
 Role: {$role}
@@ -85,13 +81,16 @@ My Notes about this role: {$notes}
 My Background: {$background}
 
 Guidelines:
-- Keep it to 3 paragraphs maximum
-- Opening: Express genuine interest in the specific role and company
-- Middle: Connect 2-3 relevant skills/experiences to the job requirements
-- Closing: Call to action, professional sign-off
-- Tone: Professional but personable, not robotic
-- Do NOT use placeholder text like [Your Name] — write it as a ready-to-use draft
+- Write 4 full paragraphs — do not cut short
+- Opening: Express genuine enthusiasm for the specific role and company, mention something specific about the company
+- Second paragraph: Highlight 2-3 concrete achievements or experiences directly relevant to the role
+- Third paragraph: Connect your skills to the job requirements, show you understand what they need
+- Closing: Strong call to action, express eagerness for an interview, professional sign-off
+- Tone: Confident, professional but personable — not robotic or generic
+- Be specific — use numbers, results, and real examples where possible
+- Do NOT use placeholder text like [Your Name] or [Date] — write it as a complete ready-to-send draft
 - Do NOT include date or address headers — just the body paragraphs
+- Aim for 300-400 words
 PROMPT;
 
         $letter = $this->gemini->generate($prompt);
@@ -99,9 +98,7 @@ PROMPT;
         return response()->json(['cover_letter' => $letter]);
     }
 
-    // -------------------------------------------------------
-    // 📊 PIPELINE INSIGHTS
-    // -------------------------------------------------------
+    // PIPELINE INSIGHTS
     public function insights(Request $request): JsonResponse
     {
         $user         = $request->user();
@@ -116,21 +113,24 @@ PROMPT;
         $appContext = $this->buildApplicationContext($applications);
 
         $prompt = <<<PROMPT
-Analyze this job seeker's application pipeline and provide actionable insights.
+Analyze this job seeker's application pipeline and provide detailed, actionable insights.
 
 {$appContext}
 
 Today's date: {$this->todayDate()}
 
-Provide exactly 4-5 insights covering:
-1. Pipeline health (response rate, conversion between stages)
-2. Any applications that need follow-up (applied 7+ days ago, no update)
-3. Deadlines coming up in the next 7 days
-4. One encouraging observation
-5. One specific recommendation to improve their job search
+Provide 5 detailed insights covering:
+1. 📊 Pipeline health — response rate, conversion between stages, how active the search is
+2. 🔔 Follow-up needed — applications with no update after 7+ days, specific companies to follow up with
+3. ⏰ Upcoming deadlines — any deadlines in the next 7 days, urgency level
+4. ⭐ Wins & encouragement — highlight positive progress, interviews, offers
+5. 💡 Specific recommendation — one concrete action to improve their job search this week
 
-Format each insight as a short paragraph with an emoji at the start.
-Be specific — reference actual companies and numbers from the data.
+For each insight:
+- Write 2-4 sentences minimum
+- Reference specific company names and numbers from the data
+- Be direct and actionable, not vague
+- If data is missing for a section, provide general advice based on what you can see
 PROMPT;
 
         $insights = $this->gemini->generate($prompt);
@@ -138,9 +138,7 @@ PROMPT;
         return response()->json(['insights' => $insights]);
     }
 
-    // -------------------------------------------------------
-    // 🏷️ JOB DESCRIPTION AUTO-TAGGER
-    // -------------------------------------------------------
+    // JOB DESCRIPTION AUTO-TAGGER
     public function tagJobDescription(Request $request): JsonResponse
     {
         $request->validate([
@@ -150,27 +148,27 @@ PROMPT;
         $jd = mb_substr($request->job_description, 0, 2000);
 
         $prompt = <<<PROMPT
-Extract key info from this job description. Be concise.
+        Extract key info from this job description. Be concise.
 
-Job Description:
-{$jd}
+        Job Description:
+        {$jd}
 
-Return this JSON (no extra text, no markdown, no code fences):
-{
-  "role_title": "job title",
-  "company": "company name or null",
-  "location": "location or null",
-  "seniority": "junior|mid|senior|lead|not specified",
-  "employment_type": "full-time|part-time|contract|freelance|not specified",
-  "remote_policy": "remote|hybrid|on-site|not specified",
-  "tech_stack": ["max 5 main technologies"],
-  "key_requirements": ["top 3 must-haves"],
-  "salary_range": "range or null",
-  "company_size_hint": "startup|mid-size|enterprise|not mentioned",
-  "estimated_priority": "high|medium|low",
-  "priority_reason": "one short sentence"
-}
-PROMPT;
+        Return this JSON (no extra text, no markdown, no code fences):
+        {
+        "role_title": "job title",
+        "company": "company name or null",
+        "location": "location or null",
+        "seniority": "junior|mid|senior|lead|not specified",
+        "employment_type": "full-time|part-time|contract|freelance|not specified",
+        "remote_policy": "remote|hybrid|on-site|not specified",
+        "tech_stack": ["max 5 main technologies"],
+        "key_requirements": ["top 3 must-haves"],
+        "salary_range": "range or null",
+        "company_size_hint": "startup|mid-size|enterprise|not mentioned",
+        "estimated_priority": "high|medium|low",
+        "priority_reason": "one short sentence"
+        }
+        PROMPT;
 
         $raw  = $this->gemini->generateJson($prompt);
         Log::info('Gemini raw response', ['raw' => $raw]);
@@ -194,9 +192,7 @@ PROMPT;
         return response()->json(['tags' => $tags]);
     }
 
-    // -------------------------------------------------------
     // HELPERS
-    // -------------------------------------------------------
     private function buildApplicationContext($applications): string
     {
         if ($applications->isEmpty()) {
@@ -219,7 +215,10 @@ PROMPT;
             }
 
             if ($app->interviewRounds->count() > 0) {
-                $line .= " | Interview rounds: {$app->interviewRounds->count()}";
+                $rounds = $app->interviewRounds->map(fn($r) =>
+                    "{$r->type}" . ($r->date ? " on {$r->date}" : '') . ($r->self_rating ? " (rated {$r->self_rating}/5)" : '')
+                )->join(', ');
+                $line .= " | Rounds: {$rounds}";
             }
 
             if ($app->notes) {
