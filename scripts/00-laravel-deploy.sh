@@ -10,9 +10,11 @@ chown -R www-data:www-data /var/www/html/storage
 chown -R www-data:www-data /var/www/html/bootstrap/cache
 
 echo "Caching config..."
+php artisan config:clear
 php artisan config:cache
 
 echo "Caching routes..."
+php artisan route:clear
 php artisan route:cache
 
 echo "Running migrations..."
