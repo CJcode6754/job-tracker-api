@@ -11,10 +11,9 @@ class ApplicationSeeder extends Seeder
 {
     public function run(): void
     {
-        // Use existing test user or create one
         $user = User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            ['name' => 'Test User', 'password' => bcrypt('password')]
+            ['email' => 'demo@example.com'],
+            ['name' => 'Demo User', 'password' => bcrypt('password')]
         );
 
         $this->command->info("Seeding 100 applications for {$user->email}...");

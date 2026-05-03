@@ -11,3 +11,6 @@ php artisan route:cache
 
 echo "Running migrations..."
 php artisan migrate --force
+
+echo "Seeding required data..."
+php artisan db:seed --class=RequiredDataSeeder --force
