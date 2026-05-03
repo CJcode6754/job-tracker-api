@@ -15,7 +15,7 @@ class RequiredDataSeeder extends Seeder
             ['name' => 'Demo User', 'password' => Hash::make('password')]
         );
 
-        if ($user->wasRecentlyCreated) {
+        if ($user->applications()->doesntExist()) {
             $this->call(ApplicationSeeder::class);
         }
     }
