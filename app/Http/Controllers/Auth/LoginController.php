@@ -29,10 +29,14 @@ class LoginController extends Controller
 
     public function login(LoginRequest $request): JsonResponse
     {
+        \Illuminate\Support\Facades\Log::info('Login attempt for: ' . $request->email);
+
         if (!Auth::attempt($request->only('email', 'password'), false)) {
+            \Illuminate\Support\Facades\Log::warning('Login failed for: ' . $request->email);
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
+        \Illuminate\Support\Facades\Log::info('Login successful for: ' . $request->email);
         $user = Auth::user();
         $user->tokens()->delete();
 

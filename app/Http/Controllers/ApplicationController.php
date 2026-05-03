@@ -24,6 +24,8 @@ class ApplicationController extends Controller
             'search' => 'nullable|string|max:255',
             'status' => 'nullable|string',
             'priority' => 'nullable|string',
+            'show_rejected' => 'nullable|boolean',
+            'show_archived' => 'nullable|boolean',
         ]);
 
         $perPage = $request->input('per_page', 20);
@@ -42,6 +44,14 @@ class ApplicationController extends Controller
 
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
+        } else {
+            // Default filters if no specific status is requested
+            if (!$request->boolean('show_rejected', false)) {
+                $query->where('status', '!=', 'rejected');
+            }
+            if (!$request->boolean('show_archived', false)) {
+                $query->where('status', '!=', 'archived');
+            }
         }
 
         if ($request->filled('priority') && $request->priority !== 'all') {
