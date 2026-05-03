@@ -1,10 +1,9 @@
 services:
   - type: web
     name: job-tracker-api
-    env: php
+    env: docker            
     plan: free
-    buildCommand: composer install --no-interaction --prefer-dist && npm install && npm run build
-    startCommand: vendor/bin/heroku-php-apache2 public/
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: APP_ENV
         value: production
@@ -41,6 +40,8 @@ envGroups:
         scope: runtime
       - key: DB_PASSWORD
         scope: runtime
+      - key: MYSQL_ATTR_SSL_CA                 
+        value: /var/www/html/database/certs/ca.pem         
       - key: GEMINI_API_KEY
         scope: runtime
       - key: GEMINI_MODEL
