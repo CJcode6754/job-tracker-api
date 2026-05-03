@@ -25,7 +25,29 @@ class RegisterRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:12',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[^a-zA-Z0-9]/',
+                'confirmed',
+            ],
+        ];
+    }
+
+    /**
+     * Get custom messages for validation errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'password.min' => 'Password must be at least 12 characters long.',
+            'password.regex' => 'Password must contain uppercase, lowercase, digits, and special characters.',
+            'password.confirmed' => 'Passwords do not match.',
+            'email.unique' => 'This email address is already registered.',
         ];
     }
 }

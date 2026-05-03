@@ -18,6 +18,16 @@ class ApplicationController extends Controller
     }
     public function index(Request $request): JsonResponse
     {
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'page' => 'nullable|integer|min:1',
+            'search' => 'nullable|string|max:255',
+            'status' => 'nullable|string',
+            'priority' => 'nullable|string',
+        ]);
+
+        $perPage = $request->input('per_page', 20);
+        
         $query = $request->user()
             ->applications()
             ->withCount('interviewRounds');
@@ -38,7 +48,7 @@ class ApplicationController extends Controller
             $query->where('priority', $request->priority);
         }
 
-        return response()->json($query->latest()->get());
+        return response()->json($query->latest()->paginate($perPage));
     }
 
     public function store(StoreApplicationRequest $request): JsonResponse

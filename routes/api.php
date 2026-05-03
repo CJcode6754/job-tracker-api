@@ -9,21 +9,31 @@ use App\Http\Controllers\AiController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::middleware('throttle:10,1')->group(function () {
+// Authentication routes with stricter rate limiting
+Route::middleware('throttle:auth')->group(function () {
     Route::post('/register', RegisterController::class);
     Route::post('/login', [LoginController::class, 'login']);
 });
 
+// Public / Semi-public routes
+Route::get('/me', [LoginController::class, 'me']);
+
+// Protected routes
 Route::middleware('auth:sanctum')->group(function () {
+    // Authentication
     Route::post('/logout', [LoginController::class, 'logout']);
-    Route::get('/me', [LoginController::class, 'me']);
     Route::post('/refresh', [LoginController::class, 'refresh']);
 
-    Route::apiResource('applications', ApplicationController::class);
-    Route::apiResource('applications.interview-rounds', InterviewRoundController::class);
+    // Application CRUD with rate limiting
+    Route::middleware('throttle:app')->group(function () {
+        Route::apiResource('applications', ApplicationController::class);
+        Route::apiResource('applications.interview-rounds', InterviewRoundController::class);
+    });
 
+    // Dashboard statistics
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 
+    // AI endpoints with stricter rate limiting
     Route::prefix('ai')->middleware('throttle:ai')->group(function () {
         Route::post('/chat',         [AiController::class, 'chat']);
         Route::post('/cover-letter', [AiController::class, 'coverLetter']);

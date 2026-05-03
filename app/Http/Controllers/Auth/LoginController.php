@@ -8,9 +8,25 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\PersonalAccessToken;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class LoginController extends Controller
 {
+    private function tokenCookie(string $token): Cookie
+    {
+        return cookie(
+            'auth_token',
+            $token,
+            config('sanctum.expiration'),
+            '/',
+            env('SESSION_DOMAIN', null),
+            env('SESSION_SECURE_COOKIE', false),
+            true,   // httpOnly
+            false,  // raw
+            'Lax'   // sameSite — Strict blocks Vite proxy requests
+        );
+    }
+
     public function login(LoginRequest $request): JsonResponse
     {
         if (!Auth::attempt($request->only('email', 'password'), false)) {
@@ -18,26 +34,29 @@ class LoginController extends Controller
         }
 
         $user = Auth::user();
-
-        // Revoke all previous tokens to prevent session accumulation
         $user->tokens()->delete();
 
-        $token = $user->createToken('auth_token', ['*'], now()->addMinutes(config('sanctum.expiration')))->plainTextToken;
+        $expiration = config('sanctum.expiration');
+        $expiresAt = $expiration ? now()->addMinutes($expiration) : null;
+        $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
-        return response()->json(['user' => $user, 'token' => $token]);
+        return response()
+            ->json(['user' => $user])
+            ->withCookie($this->tokenCookie($token));
     }
 
     public function refresh(Request $request): JsonResponse
     {
         $user = $request->user();
-
-        // Revoke current token
         $request->user()->currentAccessToken()->delete();
 
-        // Issue a fresh token
-        $token = $user->createToken('auth_token', ['*'], now()->addMinutes(config('sanctum.expiration')))->plainTextToken;
+        $expiration = config('sanctum.expiration');
+        $expiresAt = $expiration ? now()->addMinutes($expiration) : null;
+        $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
-        return response()->json(['token' => $token]);
+        return response()
+            ->json(['message' => 'Token refreshed'])
+            ->withCookie($this->tokenCookie($token));
     }
 
     public function logout(Request $request): JsonResponse
@@ -47,11 +66,13 @@ class LoginController extends Controller
             $token->delete();
         }
 
-        return response()->json(['message' => 'Logged out']);
+        return response()
+            ->json(['message' => 'Logged out'])
+            ->withoutCookie('auth_token');
     }
 
-    public function me(): JsonResponse
+    public function me(Request $request): JsonResponse
     {
-        return response()->json(Auth::user());
+        return response()->json($request->user('sanctum'));
     }
 }

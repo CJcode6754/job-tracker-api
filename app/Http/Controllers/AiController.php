@@ -15,10 +15,10 @@ class AiController extends Controller
     public function chat(Request $request): JsonResponse
     {
         $request->validate([
-            'message'        => 'required|string|max:1000',
-            'history'        => 'array',
+            'message'        => 'required|string|max:1000|min:1',
+            'history'        => 'array|max:50',
             'history.*.role' => 'required|in:user,model',
-            'history.*.text' => 'required|string',
+            'history.*.text' => 'required|string|max:2000|min:1',
         ]);
 
         $user         = $request->user();
@@ -58,18 +58,18 @@ class AiController extends Controller
     public function coverLetter(Request $request): JsonResponse
     {
         $request->validate([
-            'company'         => 'required|string',
-            'role'            => 'required|string',
+            'company'         => 'required|string|max:255|min:1',
+            'role'            => 'required|string|max:255|min:1',
             'job_description' => 'nullable|string|max:3000',
             'notes'           => 'nullable|string|max:1000',
             'user_background' => 'nullable|string|max:1000',
         ]);
 
-        $company    = $request->company;
-        $role       = $request->role;
-        $jd         = $request->input('job_description', 'Not provided');
-        $notes      = $request->input('notes', 'None');
-        $background = $request->input('user_background', 'Not provided');
+        $company    = $this->sanitizeForPrompt($request->company);
+        $role       = $this->sanitizeForPrompt($request->role);
+        $jd         = $this->sanitizeForPrompt($request->input('job_description', 'Not provided'));
+        $notes      = $this->sanitizeForPrompt($request->input('notes', 'None'));
+        $background = $this->sanitizeForPrompt($request->input('user_background', 'Not provided'));
 
         $prompt = <<<PROMPT
         Write a professional, compelling cover letter for the following job application.
@@ -143,10 +143,11 @@ class AiController extends Controller
     public function tagJobDescription(Request $request): JsonResponse
     {
         $request->validate([
-            'job_description' => 'required|string|max:5000',
+            'job_description' => 'required|string|max:5000|min:50',
         ]);
 
-        $jd = mb_substr($request->job_description, 0, 2000);
+        $jd = $this->sanitizeForPrompt($request->job_description);
+        $jd = mb_substr($jd, 0, 2000);
 
         $prompt = <<<PROMPT
         Extract key info from this job description. Be concise.
@@ -244,5 +245,28 @@ class AiController extends Controller
     private function todayDate(): string
     {
         return now()->format('Y-m-d');
+    }
+
+    private function sanitizeForPrompt(string $input): string
+    {
+        // Remove dangerous prompt injection patterns
+        $dangerous = [
+            'IGNORE ALL PREVIOUS INSTRUCTIONS',
+            'IGNORE INSTRUCTIONS',
+            'IGNORE THE INSTRUCTIONS',
+            'SYSTEM PROMPT',
+            'SYSTEM INSTRUCTIONS',
+            'ROLE',
+        ];
+        
+        foreach ($dangerous as $pattern) {
+            $input = preg_replace("/\\b" . preg_quote($pattern) . "\\b/i", '', $input);
+        }
+
+        // Remove excessive newlines that could break prompt structure
+        $input = preg_replace("/\n{3,}/", "\n\n", $input);
+        
+        // Trim whitespace
+        return trim($input);
     }
 }
