@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreApplicationRequest;
+use App\Http\Resources\ApplicationResource;
 use App\Models\Application;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -16,7 +16,7 @@ class ApplicationController extends Controller
         abort_if(empty($decoded), 404);
         return Application::findOrFail($decoded[0]);
     }
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $request->validate([
             'per_page' => 'nullable|integer|min:1|max:200',
@@ -60,23 +60,23 @@ class ApplicationController extends Controller
             $query->where('priority', $request->priority);
         }
 
-        return response()->json($query->latest()->paginate($perPage));
+        return ApplicationResource::collection($query->latest()->paginate($perPage));
     }
 
-    public function store(StoreApplicationRequest $request): JsonResponse
+    public function store(StoreApplicationRequest $request)
     {
         $app = $request->user()->applications()->create($request->validated());
-        return response()->json($app->load(['contacts', 'interviewRounds']), 201);
+        return (new ApplicationResource($app->load(['contacts', 'interviewRounds'])))->response()->setStatusCode(201);
     }
 
-    public function show(string $hash): JsonResponse
+    public function show(string $hash)
     {
         $application = $this->findByHash($hash);
         $this->authorize('view', $application);
-        return response()->json($application->load(['contacts', 'interviewRounds']));
+        return new ApplicationResource($application->load(['contacts', 'interviewRounds']));
     }
 
-    public function update(StoreApplicationRequest $request, string $hash): JsonResponse
+    public function update(StoreApplicationRequest $request, string $hash)
     {
         $application = $this->findByHash($hash);
         $this->authorize('update', $application);
@@ -85,10 +85,10 @@ class ApplicationController extends Controller
             $data['archived_at'] = now();
         }
         $application->update($data);
-        return response()->json($application->fresh(['contacts', 'interviewRounds']));
+        return new ApplicationResource($application->fresh(['contacts', 'interviewRounds']));
     }
 
-    public function destroy(string $hash): JsonResponse
+    public function destroy(string $hash)
     {
         $application = $this->findByHash($hash);
         $this->authorize('delete', $application);

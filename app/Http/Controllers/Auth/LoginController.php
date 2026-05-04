@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -41,7 +42,7 @@ class LoginController extends Controller
         $token      = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
         return response()
-            ->json(['user' => $user, 'plainTextToken' => $token])
+            ->json(['user' => new UserResource($user), 'plainTextToken' => $token])
             ->withCookie($this->tokenCookie($token));
     }
 
@@ -73,6 +74,6 @@ class LoginController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user('sanctum'));
+        return response()->json($request->user('sanctum') ? new UserResource($request->user('sanctum')) : null);
     }
 }

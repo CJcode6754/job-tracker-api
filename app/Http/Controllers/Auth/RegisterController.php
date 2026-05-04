@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +22,7 @@ class RegisterController extends Controller
         $token = $user->createToken('auth_token', ['*'], now()->addMinutes(config('sanctum.expiration')))->plainTextToken;
 
         return response()
-            ->json(['user' => $user, 'plainTextToken' => $token, 'message' => 'Registered successfully'], 201)
+            ->json(['user' => new UserResource($user), 'plainTextToken' => $token, 'message' => 'Registered successfully'], 201)
             ->cookie(
                 'auth_token',
                 $token,

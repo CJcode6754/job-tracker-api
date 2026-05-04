@@ -9,9 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class InterviewRound extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'application_id', 'date', 'type', 'interviewer_name', 'notes', 'self_rating',
     ];
+
+    protected $hidden = ['application_id'];
 
     public function application(): BelongsTo
     {

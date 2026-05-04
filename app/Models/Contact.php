@@ -14,6 +14,8 @@ class Contact extends Model
         'application_id', 'name', 'email', 'phone', 'position', 'notes',
     ];
 
+    protected $hidden = ['application_id'];
+
     public function application(): BelongsTo
     {
         return $this->belongsTo(Application::class);
